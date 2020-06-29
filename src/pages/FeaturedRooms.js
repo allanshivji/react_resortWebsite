@@ -11,10 +11,10 @@ class FeaturedRooms extends Component {
 
     render() {
         let { loading, featuredRooms: rooms } = this.context;
-
+        
         rooms = rooms.map(room => {
             return <Room
-                key={rooms.id}
+                key={room.id}
                 room={room}
             />
         })
