@@ -1,5 +1,8 @@
 import React, { Component } from 'react';
-import items from './data';
+
+// import items from './data'; 
+import Client from './Contentful';
+
 
 const RoomContext = React.createContext();
 
@@ -8,18 +11,63 @@ class RoomProvider extends Component {
         rooms: [],
         sortedRooms: [],
         featuredRooms: [],
-        loading: true
+        loading: true,
+        type: 'all',
+        capacity: 1,
+        price: 0,
+        minPrice: 0,
+        maxPrice: 0,
+        minSize: 0,
+        maxSize: 0,
+        breakfast: false,
+        pets: false
+    }
+
+    // Get data
+    getData = async () => {
+        try {
+            let response = await Client.getEntries({
+                content_type: "resortRooms"
+            });
+            // let rooms = this.formatData(response.items)
+            let rooms = this.formatData(response.items)
+            let featuredRooms = rooms.filter(room => room.featured === true);
+
+            let maxPrice = Math.max(...rooms.map(item => item.price));
+            let maxSize = Math.max(...rooms.map(item => item.size));
+
+            this.setState({
+                rooms,
+                featuredRooms,
+                sortedRooms: rooms,
+                loading: false,
+                price: maxPrice,
+                maxPrice: maxPrice,
+                maxSize: maxSize
+            })
+
+        } catch (error) {
+            console.log(error)
+        }
     }
 
     componentDidMount() {
-        let rooms = this.formatData(items)
-        let featuredRooms = rooms.filter(room => room.featured === true);
-        this.setState({
-            rooms,
-            featuredRooms,
-            sortedRooms: rooms,
-            loading: false
-        })
+        // let rooms = this.formatData(items)
+        // let featuredRooms = rooms.filter(room => room.featured === true);
+
+        // let maxPrice = Math.max(...rooms.map(item => item.price));
+        // let maxSize = Math.max(...rooms.map(item => item.size));
+
+        // this.setState({
+        //     rooms,
+        //     featuredRooms,
+        //     sortedRooms: rooms,
+        //     loading: false,
+        //     price: maxPrice,
+        //     maxPrice: maxPrice,
+        //     maxSize: maxSize
+        // })
+        this.getData()
     }
 
     formatData(items) {
@@ -40,9 +88,65 @@ class RoomProvider extends Component {
         return room;
     }
 
+    handleChange = event => {
+        const target = event.target;
+
+        const name = event.target.name;
+        const value = target.type === 'checkbox' ? target.checked : target.value;
+
+        this.setState({
+            [name]: value
+        }, this.filterRooms)
+    }
+
+    filterRooms = () => {
+        let { rooms, type, capacity, price, minSize, maxSize, breakfast, pets } = this.state;
+
+        // all rooms
+        let tempRooms = [...rooms];
+
+        // transform value
+        capacity = parseInt(capacity);
+        price = parseInt(price);
+
+        // filter by type
+        if (type !== 'all') {
+            tempRooms = tempRooms.filter(room => room.type === type)
+        }
+
+        // filter by capacity
+        if (capacity !== 1) {
+            tempRooms = tempRooms.filter(room => room.capacity >= capacity);
+        }
+
+        // filter by price
+        tempRooms = tempRooms.filter(room => room.price <= price);
+
+        // filter by size
+        tempRooms = tempRooms.filter(room => room.size >= minSize && room.size <= maxSize);
+
+        // filter by breakfast
+        if (breakfast) {
+            console.log(breakfast);
+
+            tempRooms = tempRooms.filter(room => room.breakfast === true);
+        }
+
+        // filter by pets
+        if (pets) {
+            tempRooms = tempRooms.filter(room => room.pets === true);
+        }
+
+        this.setState({
+            sortedRooms: tempRooms
+        });
+
+
+    }
+
     render() {
         return (
-            <RoomContext.Provider value={{ ...this.state, getRoom: this.getRoom }}>
+            <RoomContext.Provider value={{ ...this.state, getRoom: this.getRoom, handleChange: this.handleChange }}>
                 {this.props.children}
             </RoomContext.Provider>
         );
