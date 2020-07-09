@@ -1,3 +1,5 @@
-## Beach Resort Travel Website
+## Beach Resort Travel Booking Website
 
-Work still in progress..
+Complete view of Resort booking website using React, Higher Order Components, states etc.
+
+Demo - https://allans-react-resort-rooms.netlify.app
